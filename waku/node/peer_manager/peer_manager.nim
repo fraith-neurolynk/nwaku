@@ -479,6 +479,9 @@ proc canBeConnected*(pm: PeerManager, peerId: PeerId): bool =
   # Returns if we can try to connect to this peer, based on past failed attempts
   # It uses an exponential backoff. Each connection attempt makes us
   # wait more before trying again.
+
+  # ---- only attempt if node is online
+
   let failedAttempts = pm.wakuPeerStore[NumberFailedConnBook][peerId]
 
   # if it never errored, we can try to connect
