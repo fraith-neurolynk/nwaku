@@ -18,8 +18,6 @@ import
   libp2p/protocols/ping,
   libp2p/protocols/pubsub/gossipsub,
   libp2p/protocols/pubsub/rpc/messages,
-  libp2p/protocols/connectivity/autonat/client,
-  libp2p/protocols/connectivity/autonat/service,
   libp2p/builders,
   libp2p/transports/transport,
   libp2p/transports/tcptransport,
@@ -459,7 +457,7 @@ proc startRelay*(node: WakuNode) {.async.} =
   ## Setup relay protocol
 
   # Resume previous relay connections
-  if node.peerManager.wakuPeerStore.hasPeers(protocolMatcher(WakuRelayCodec)):
+  if node.peerManager.switch.peerStore.hasPeers(protocolMatcher(WakuRelayCodec)):
     info "Found previous WakuRelay peers. Reconnecting."
 
     # Reconnect to previous relay peers. This will respect a backoff period, if necessary
@@ -1302,7 +1300,7 @@ proc fetchPeerExchangePeers*(
       )
     )
 
-  info "Retrieving peer info via peer exchange protocol"
+  info "Retrieving peer info via peer exchange protocol", amount
   let pxPeersRes = await node.wakuPeerExchange.request(amount)
   if pxPeersRes.isOk:
     var validPeers = 0

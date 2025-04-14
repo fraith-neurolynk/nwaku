@@ -18,18 +18,15 @@ import
     waku_core,
     node/peer_manager,
     node/waku_node,
-    waku_enr/sharding,
     discovery/waku_discv5,
     waku_filter_v2/common,
     waku_relay/protocol,
   ],
-  ../testlib/
-    [wakucore, wakunode, testasync, testutils, assertions, comparisons, futures],
+  ../testlib/[wakucore, wakunode, testasync, testutils, comparisons],
   ../waku_enr/utils,
   ../waku_archive/archive_utils,
   ../waku_discv5/utils,
-  ./peer_manager/peer_store/utils,
-  ./utils
+  ./peer_manager/peer_store/utils
 
 const DEFAULT_PROTOCOLS: seq[string] =
   @["/ipfs/id/1.0.0", "/libp2p/autonat/1.0.0", "/libp2p/circuit/relay/0.2.0/hop"]
@@ -45,9 +42,9 @@ suite "Peer Manager":
 
   var
     server {.threadvar.}: WakuNode
-    serverPeerStore {.threadvar.}: WakuPeerStore
+    serverPeerStore {.threadvar.}: PeerStore
     client {.threadvar.}: WakuNode
-    clientPeerStore {.threadvar.}: WakuPeerStore
+    clientPeerStore {.threadvar.}: PeerStore
 
   var
     serverRemotePeerInfo {.threadvar.}: RemotePeerInfo
@@ -64,9 +61,9 @@ suite "Peer Manager":
       clientKey = generateSecp256k1Key()
 
     server = newTestWakuNode(serverKey, listenIp, Port(3000))
-    serverPeerStore = server.peerManager.wakuPeerStore
+    serverPeerStore = server.peerManager.switch.peerStore
     client = newTestWakuNode(clientKey, listenIp, Port(3001))
-    clientPeerStore = client.peerManager.wakuPeerStore
+    clientPeerStore = client.peerManager.switch.peerStore
 
     await allFutures(server.start(), client.start())
 
@@ -140,7 +137,7 @@ suite "Peer Manager":
           clientPeerStore.peers().len == 1
 
         # Given the server is marked as CannotConnect
-        client.peerManager.wakuPeerStore[ConnectionBook].book[serverPeerId] =
+        client.peerManager.switch.peerStore[ConnectionBook].book[serverPeerId] =
           CannotConnect
 
         # When pruning the client's store
@@ -177,7 +174,7 @@ suite "Peer Manager":
           clientPeerStore.peers().len == 1
 
         # Given the server is marked as having 1 failed connection
-        client.peerManager.wakuPeerStore[NumberFailedConnBook].book[serverPeerId] = 1
+        client.peerManager.switch.peerStore[NumberFailedConnBook].book[serverPeerId] = 1
 
         # When pruning the client's store
         client.peerManager.prunePeerStore()
@@ -196,7 +193,7 @@ suite "Peer Manager":
           clientPeerStore.peers().len == 1
 
         # Given the server is marked as not connected
-        client.peerManager.wakuPeerStore[ConnectionBook].book[serverPeerId] =
+        client.peerManager.switch.peerStore[ConnectionBook].book[serverPeerId] =
           CannotConnect
 
         # When pruning the client's store
@@ -220,7 +217,7 @@ suite "Peer Manager":
 
         # Given the server is marked as not connected
         # (There's only one shard in the ENR so avg shards will be the same as the shard count; hence it will be purged.)
-        client.peerManager.wakuPeerStore[ConnectionBook].book[serverPeerId] =
+        client.peerManager.switch.peerStore[ConnectionBook].book[serverPeerId] =
           CannotConnect
 
         # When pruning the client's store
@@ -714,8 +711,8 @@ suite "Persistence Check":
       client = newTestWakuNode(
         clientKey, listenIp, listenPort, peerStorage = clientPeerStorage
       )
-      serverPeerStore = server.peerManager.wakuPeerStore
-      clientPeerStore = client.peerManager.wakuPeerStore
+      serverPeerStore = server.peerManager.switch.peerStore
+      clientPeerStore = client.peerManager.switch.peerStore
 
     await allFutures(server.start(), client.start())
 
@@ -731,7 +728,7 @@ suite "Persistence Check":
       newClient = newTestWakuNode(
         clientKey, listenIp, listenPort, peerStorage = newClientPeerStorage
       )
-      newClientPeerStore = newClient.peerManager.wakuPeerStore
+      newClientPeerStore = newClient.peerManager.switch.peerStore
 
     await newClient.start()
 
@@ -756,8 +753,8 @@ suite "Persistence Check":
       client = newTestWakuNode(
         clientKey, listenIp, listenPort, peerStorage = clientPeerStorage
       )
-      serverPeerStore = server.peerManager.wakuPeerStore
-      clientPeerStore = client.peerManager.wakuPeerStore
+      serverPeerStore = server.peerManager.switch.peerStore
+      clientPeerStore = client.peerManager.switch.peerStore
 
     await allFutures(server.start(), client.start())
 
@@ -776,8 +773,8 @@ suite "Persistence Check":
       clientKey = generateSecp256k1Key()
       server = newTestWakuNode(serverKey, listenIp, listenPort)
       client = newTestWakuNode(clientKey, listenIp, listenPort)
-      serverPeerStore = server.peerManager.wakuPeerStore
-      clientPeerStore = client.peerManager.wakuPeerStore
+      serverPeerStore = server.peerManager.switch.peerStore
+      clientPeerStore = client.peerManager.switch.peerStore
 
     await allFutures(server.start(), client.start())
 
@@ -792,13 +789,13 @@ suite "Mount Order":
   var
     client {.threadvar.}: WakuNode
     clientRemotePeerInfo {.threadvar.}: RemotePeerInfo
-    clientPeerStore {.threadvar.}: WakuPeerStore
+    clientPeerStore {.threadvar.}: PeerStore
 
   asyncSetup:
     let clientKey = generateSecp256k1Key()
 
     client = newTestWakuNode(clientKey, listenIp, listenPort)
-    clientPeerStore = client.peerManager.wakuPeerStore
+    clientPeerStore = client.peerManager.switch.peerStore
 
     await client.start()
 

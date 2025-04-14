@@ -3,7 +3,8 @@
 import
   std/[sequtils, tables],
   stew/shims/net,
-  stew/[base32, results],
+  results,
+  stew/base32,
   testutils/unittests,
   chronicles,
   chronos,
@@ -94,20 +95,20 @@ suite "Waku DNS Discovery":
 
     check:
       # We have successfully connected to all discovered nodes
-      node4.peerManager.wakuPeerStore.peers().anyIt(
+      node4.peerManager.switch.peerStore.peers().anyIt(
         it.peerId == node1.switch.peerInfo.peerId
       )
-      node4.peerManager.wakuPeerStore.connectedness(node1.switch.peerInfo.peerId) ==
+      node4.peerManager.switch.peerStore.connectedness(node1.switch.peerInfo.peerId) ==
         Connected
-      node4.peerManager.wakuPeerStore.peers().anyIt(
+      node4.peerManager.switch.peerStore.peers().anyIt(
         it.peerId == node2.switch.peerInfo.peerId
       )
-      node4.peerManager.wakuPeerStore.connectedness(node2.switch.peerInfo.peerId) ==
+      node4.peerManager.switch.peerStore.connectedness(node2.switch.peerInfo.peerId) ==
         Connected
-      node4.peerManager.wakuPeerStore.peers().anyIt(
+      node4.peerManager.switch.peerStore.peers().anyIt(
         it.peerId == node3.switch.peerInfo.peerId
       )
-      node4.peerManager.wakuPeerStore.connectedness(node3.switch.peerInfo.peerId) ==
+      node4.peerManager.switch.peerStore.connectedness(node3.switch.peerInfo.peerId) ==
         Connected
 
     await allFutures([node1.stop(), node2.stop(), node3.stop(), node4.stop()])

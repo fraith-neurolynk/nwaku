@@ -202,13 +202,6 @@ proc main(rng: ref HmacDrbgContext): Future[int] {.async.} =
 
   var enrBuilder = EnrBuilder.init(nodeKey)
 
-  let relayShards = RelayShards.init(conf.clusterId, conf.shards).valueOr:
-    error "Relay shards initialization failed", error = error
-    return 1
-  enrBuilder.withWakuRelaySharding(relayShards).isOkOr:
-    error "Building ENR with relay sharding failed", error = error
-    return 1
-
   let recordRes = enrBuilder.build()
   let record =
     if recordRes.isErr():
@@ -233,8 +226,6 @@ proc main(rng: ref HmacDrbgContext): Future[int] {.async.} =
   )
 
   let node = builder.build().tryGet()
-  node.mountMetadata(conf.clusterId).isOkOr:
-    error "failed to mount waku metadata protocol: ", err = error
 
   if conf.ping:
     try:
@@ -255,7 +246,7 @@ proc main(rng: ref HmacDrbgContext): Future[int] {.async.} =
     return 1
 
   let lp2pPeerStore = node.switch.peerStore
-  let conStatus = node.peerManager.wakuPeerStore[ConnectionBook][peer.peerId]
+  let conStatus = node.peerManager.switch.peerStore[ConnectionBook][peer.peerId]
 
   if conf.ping:
     discard await pingFut
