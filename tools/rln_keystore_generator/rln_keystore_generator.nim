@@ -76,6 +76,7 @@ proc doRlnKeystoreGenerator*(conf: WakuNodeConf) =
     quit(1)
 
   # 5. register on-chain
+  debug "credential idcommit", idCommitment = credential.idCommitment.inHex()
   try:
     waitFor groupManager.register(credential, conf.rlnRelayUserMessageLimit)
   except Exception, CatchableError:
