@@ -1,3 +1,7 @@
+> [!CAUTION]
+> LEGACY / NO USAR PARA CAPITAL COMMAND
+> Este repositorio queda preservado temporalmente solo como respaldo histórico. El proyecto activo es Capital Command en https://github.com/fraith-neurolynk/fraith1ights.github.io
+
 # Nwaku
 
 ## Introduction
